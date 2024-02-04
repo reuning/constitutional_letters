@@ -11,7 +11,7 @@ execute:
 
 ## Loading and Prepping Data
 
-The data for this projects comes from the Library of Congress's [archaic website](http://memory.loc.gov/ammem/amlaw/lwdglink.html) with all "documents written by delegates that bear directly upon their work during their years of actual service in the First and Second Continental Congresses, 1774-1789."[^source]. The script here scrapes all documents, identifying letters as any with the title "X to Y". The scraped data is available here.
+The data for this projects comes from the Library of Congress's [archaic website](http://memory.loc.gov/ammem/amlaw/lwdglink.html) with all "documents written by delegates that bear directly upon their work during their years of actual service in the First and Second Continental Congresses, 1774-1789."[^source]. The [script here](https://github.com/reuning/constitutional_letters/blob/main/init.r) scrapes all documents, identifying letters as any with the title "X to Y". The [scraped data](https://github.com/reuning/constitutional_letters/blob/main/const_letters.csv) is available here.
 
 [^source]: <http://memory.loc.gov/ammem/amlaw/lwdg.html>
 
