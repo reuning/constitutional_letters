@@ -1,0 +1,4 @@
+- source: sna.qmd
+  quarto-pub:
+    - id: e7d26b5c-9c11-4798-9b25-bc1edb52f6d4
+      url: 'https://reuning.quarto.pub/letters_network'

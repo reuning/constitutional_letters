@@ -1,0 +1,118 @@
+---
+title: Network of letters sent during the Second Continental Congress
+author: 
+    name: Kevin Reuning
+    email: reunink@miamioh.edu
+output: html
+toc: true
+execute:
+    warning: false
+---
+
+## Loading and Prepping Data
+
+The data for this projects comes from the Library of Congress's [archaic website](http://memory.loc.gov/ammem/amlaw/lwdglink.html) with all "documents written by delegates that bear directly upon their work during their years of actual service in the First and Second Continental Congresses, 1774-1789."[^source]. The script here scrapes all documents, identifying letters as any with the title "X to Y". The scraped data is available here.
+
+[^source]: <http://memory.loc.gov/ammem/amlaw/lwdg.html>
+
+```{r}
+library(tidyverse)
+library(igraph)
+library(ggraph)
+library(gt)
+data <- read_csv("const_letters.csv")
+```
+
+To simplify things we use `filter()` to pick just letters sent during the [Second Continental Convention](https://en.wikipedia.org/wiki/Second_Continental_Congress). There can be multiple letters sent between two individuals so we use `group_by()` to group all letters sent from Person A to Person B and then `summarize()` to count them all up. 
+
+This creates a data frame that is an `edge_list()` with the column `n` as the number of letters sent. We can turn this into a graph object using `graph_from_data_frame()`. 
+
+```{r}
+edge_data <- data |> 
+    filter(as_date(date) >= (as_date("1775-05-10")) & 
+            as_date(date) <= as_date("1781-03-01") ) |>
+    group_by(head, tail) |> 
+    summarize(n=n())
+
+net <- graph_from_data_frame(edge_data)
+
+```
+
+## Visualizing the Networks
+
+We use the [ggraph](https://ggraph.data-imaginist.com/index.html) library to visualize the network. The `ggraph` library follows the `ggplot` style, requiring you to set geoms for the edges, and nodes. @fig-full-net visualizes the whole network, creating a classic "hairball" network.
+
+```{r}
+#| label: fig-full-net
+#| fig-cap: Full Network of Letters
+#| cap-location: margin
+#| cache: true
+#| fig-asp: 1
+net |>
+    ggraph(layout="graphopt") + 
+    geom_edge_link(color="gray30", alpha=.25, 
+        arrow = arrow(length = unit(1, 'mm'), type="closed"), 
+        end_cap = circle(1, 'mm')) + 
+    geom_node_point(color="springgreen4") + 
+    theme_graph()
+```
+
+
+In order to make something useful out of this we can pull the biggest component from the network (wherever node can reach every other node). In order to be in this network an individual has to both send and receive a letter. 
+
+::: {.panel-tabset}
+
+## No Labels
+```{r}
+#| label: fig-main-comp
+#| fig-cap: Largest Component
+#| cap-location: margin
+#| cache: true
+#| fig-asp: 1
+
+set.seed(1)
+net |> largest_component(mode="strong") |> 
+    ggraph(layout="fr") +     
+    geom_edge_link(color="gray30", alpha=.25, 
+        arrow = arrow(length = unit(1, 'mm'), type="closed"), 
+        end_cap = circle(2, 'mm'), 
+        start_cap=circle(2, 'mm')) + 
+    geom_node_point(color="springgreen4") + 
+    theme_graph()
+```
+
+## Labeled
+```{r}
+#| label: fig-main-comp-labeled
+#| fig-cap: Largest Component
+#| cap-location: margin
+#| cache: true
+#| fig-asp: 1
+
+set.seed(1)
+net |> largest_component(mode="strong") |> 
+    ggraph(layout="fr") +     
+    geom_edge_link(color="gray30", alpha=.25, 
+        arrow = arrow(length = unit(1, 'mm'), type="closed"), 
+        end_cap = circle(2, 'mm'), 
+        start_cap=circle(2, 'mm')) + 
+    geom_node_text(aes(label=name), color="springgreen4") + 
+    theme_graph()
+```
+
+:::
+
+
+## Calculating Centrality Statistics 
+
+```{r}
+V(net)$Between <- centr_betw(net)$res
+V(net)$Closeness <- centr_clo(net)$res
+V(net)$Degree <- centr_degree(net)$res
+
+tab <- as_data_frame(net,  what="vertices") |> 
+    tibble() |> arrange(desc(Degree))
+gt(tab) |> 
+    cols_label("name"="Name") |> 
+    opt_interactive(page_size_default=50)
+```
