@@ -63,4 +63,3 @@ full_data <- future_lapply(split_data, get_date, base=base_url) |> list_rbind()
 
 full_data <- full_data |> mutate(date= as.Date(date, format="x%Y%m%d"))
 write_csv(full_data, "const_letters.csv")
-S
